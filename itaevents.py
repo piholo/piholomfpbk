@@ -30,6 +30,10 @@ DADDY= "dad"
 # Add a cache for logos to avoid repeated requests
 LOGO_CACHE = {}
 
+# Add a cache for logos loaded from the local file
+LOCAL_LOGO_CACHE = [] # Changed to a list to store URLs directly
+LOCAL_LOGO_FILE = "guardacalcio_image_links.txt"
+
 # Define keywords for filtering channels
 EVENT_KEYWORDS = ["italy", "atp", "tennis", "basketball", "formula uno", "f1", "motogp", "moto gp", "volley", "serie a", "serie b", "serie c", "uefa champions", "uefa europa",
                  "conference league", "coppa italia", "premier league", "bundesliga", "la liga", "ligue 1"]
@@ -53,6 +57,21 @@ headers = {
 if os.path.exists(M3U8_OUTPUT_FILE):
     os.remove(M3U8_OUTPUT_FILE)
 
+def load_local_logos():
+    """Loads logo links from the local file into a cache."""
+    if not LOCAL_LOGO_CACHE: # Load only once
+        try:
+            with open(LOCAL_LOGO_FILE, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line: # Add non-empty lines to the list
+                        LOCAL_LOGO_CACHE.append(line)
+            print(f"Caricati {len(LOCAL_LOGO_CACHE)} loghi dal file locale: {LOCAL_LOGO_FILE}")
+        except FileNotFoundError:
+            print(f"File locale dei loghi non trovato: {LOCAL_LOGO_FILE}. Procedo con lo scraping web.")
+        except Exception as e:
+            print(f"Errore durante il caricamento del file locale dei loghi {LOCAL_LOGO_FILE}: {e}")
+
 def get_dynamic_logo(event_name):
     """
     Cerca immagini dinamiche per eventi di Serie A, Serie B, Serie C, La Liga, Premier League, Bundesliga e Ligue 1
@@ -66,15 +85,44 @@ def get_dynamic_logo(event_name):
 
     # Crea una chiave di cache specifica per questa partita
     cache_key = None
+    team1 = None
+    team2 = None
     if teams_match:
         team1 = teams_match.group(1).strip()
         team2 = teams_match.group(2).strip()
         cache_key = f"{team1} vs {team2}"
 
-        # Check if we already have this specific match in cache
+        # Check if we already have this specific match in LOGO_CACHE (from web scraping)
         if cache_key in LOGO_CACHE:
-            print(f"Logo trovato in cache per: {cache_key}")
+            print(f"Logo trovato in cache (web) per: {cache_key}")
             return LOGO_CACHE[cache_key]
+
+        # Check if we have this specific match in LOCAL_LOGO_CACHE (from local file)
+        load_local_logos() # Ensure local logos are loaded
+
+        # --- Nuova logica per cercare nomi squadre negli URL locali ---
+        if LOCAL_LOGO_CACHE:
+            team1_lower = team1.lower() if team1 else ""
+            team2_lower = team2.lower() if team2 else ""
+
+            for logo_url in LOCAL_LOGO_CACHE:
+                logo_url_lower = logo_url.lower()
+                # Check if both team names are in the URL (case-insensitive)
+                if team1_lower and team2_lower and team1_lower in logo_url_lower and team2_lower in logo_url_lower:
+                     print(f"Logo trovato nel file locale per: {cache_key} -> {logo_url}")
+                     # Add to main cache for future use
+                     if cache_key:
+                         LOGO_CACHE[cache_key] = logo_url
+                     return logo_url
+                # Check if at least one team name is in the URL (partial match fallback)
+                elif (team1_lower and team1_lower in logo_url_lower) or (team2_lower and team2_lower in logo_url_lower):
+                     print(f"Logo parziale trovato nel file locale per: {cache_key} -> {logo_url}")
+                     # Add to main cache for future use
+                     if cache_key:
+                         LOGO_CACHE[cache_key] = logo_url
+                     return logo_url
+        # --- Fine nuova logica ---
+
 
     # Verifica se l'evento è di Serie A o altre leghe
     is_serie_a_or_other_leagues = any(league in event_name for league in ["Italy - Serie A :", "La Liga :", "Premier League :", "Bundesliga :", "Ligue 1 :"])
@@ -89,11 +137,12 @@ def get_dynamic_logo(event_name):
         print(f"Evento UEFA o Coppa Italia rilevato: {event_name}")
     else:
         print(f"Evento non di Serie A, Serie B, Serie C o altre leghe: {event_name}")
+        # If no specific league and not found in local file/web cache, return default
         if cache_key:
             LOGO_CACHE[cache_key] = LOGO
         return LOGO
 
-    # Se non abbiamo ancora estratto i nomi delle squadre, fallo ora
+    # Se non abbiamo ancora estratto i nomi delle squadre, fallo ora (dopo aver controllato cache e file locale)
     if not teams_match:
         print(f"Non sono riuscito a estrarre i nomi delle squadre da: {event_name}")
         return LOGO
@@ -125,58 +174,58 @@ def get_dynamic_logo(event_name):
     print(f"Squadre normalizzate: '{team1_normalized}' vs '{team2_normalized}'")
 
     try:
-        if is_serie_a_or_other_leagues or is_uefa_or_coppa or is_serie_b_or_c:
-            # First try to fetch logos from guardacalcio.{GUARCAL}
-            guardacalcio_url = f"https://guardacalcio.{GUARCAL}/partite-streaming.html"
-            headers_guardacalcio = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
-            }
+        # --- Inizio logica di scraping web (originale) ---
+        # First try to fetch logos from guardacalcio.{GUARCAL}
+        guardacalcio_url = f"https://guardacalcio.{GUARCAL}/partite-streaming.html"
+        headers_guardacalcio = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+        }
 
-            print(f"Cercando logo per {team1_normalized} vs {team2_normalized} su guardacalcio.{GUARCAL}...")
+        print(f"Cercando logo per {team1_normalized} vs {team2_normalized} su guardacalcio.{GUARCAL}...")
 
-            response = requests.get(guardacalcio_url, headers=headers_guardacalcio, timeout=10)
-            html_content = response.text
+        response = requests.get(guardacalcio_url, headers=headers_guardacalcio, timeout=10)
+        html_content = response.text
 
-            # Parse with BeautifulSoup
-            soup = BeautifulSoup(html_content, 'html.parser')
+        # Parse with BeautifulSoup
+        soup = BeautifulSoup(html_content, 'html.parser')
 
-            # Cerca tutte le immagini nella pagina
-            img_tags = soup.find_all('img')
-            print(f"Trovate {len(img_tags)} immagini su guardacalcio.{GUARCAL}")
+        # Cerca tutte le immagini nella pagina
+        img_tags = soup.find_all('img')
+        print(f"Trovate {len(img_tags)} immagini su guardacalcio.{GUARCAL}")
 
-            # Cerca immagini che contengono i nomi delle squadre nel src o nell'alt
-            for img in img_tags:
-                if img.has_attr('src'):
-                    src = img['src']
-                    alt = img.get('alt', '')
+        # Cerca immagini che contengono i nomi delle squadre nel src o nell'alt
+        for img in img_tags:
+            if img.has_attr('src'):
+                src = img['src']
+                alt = img.get('alt', '')
 
-                    # Normalizza src e alt per la ricerca
-                    src_normalized = src.lower()
-                    alt_normalized = alt.lower()
+                # Normalizza src e alt per la ricerca
+                src_normalized = src.lower()
+                alt_normalized = alt.lower()
 
-                    # Verifica se il nome di una delle squadre è presente nel src o nell'alt
-                    if (team1_normalized.lower() in src_normalized or team1_normalized.lower() in alt_normalized or
-                        team2_normalized.lower() in src_normalized or team2_normalized.lower() in alt_normalized):
+                # Verifica se il nome di una delle squadre è presente nel src o nell'alt
+                if (team1_normalized.lower() in src_normalized or team1_normalized.lower() in alt_normalized or
+                    team2_normalized.lower() in src_normalized or team2_normalized.lower() in alt_normalized):
 
-                        # Assicurati che l'URL sia assoluto
-                        if src.startswith('http'):
-                            logo_url = src
+                    # Assicurati che l'URL sia assoluto
+                    if src.startswith('http'):
+                        logo_url = src
+                    else:
+                        # Costruisci URL assoluto
+                        base_url = f"https://guardacalcio.{GUARCAL}"
+                        if src.startswith('/'):
+                            logo_url = base_url + src
                         else:
-                            # Costruisci URL assoluto
-                            base_url = f"https://guardacalcio.{GUARCAL}"
-                            if src.startswith('/'):
-                                logo_url = base_url + src
-                            else:
-                                logo_url = base_url + '/' + src
+                            logo_url = base_url + '/' + src
 
-                        print(f"Trovato logo su guardacalcio.{GUARCAL}: {logo_url}")
-                        if cache_key:
-                            LOGO_CACHE[cache_key] = logo_url
-                        return logo_url
+                    print(f"Trovato logo su guardacalcio.{GUARCAL}: {logo_url}")
+                    if cache_key:
+                        LOGO_CACHE[cache_key] = logo_url
+                    return logo_url
 
-            # If no logo found on guardacalcio.{GUARCAL}, try skystreaming.{SKYSTR}
-            print(f"Nessun logo trovato su guardacalcio.{GUARCAL}, cercando su skystreaming.{SKYSTR}...")
+        # If no logo found on guardacalcio.{GUARCAL}, try skystreaming.{SKYSTR}
+        print(f"Nessun logo trovato su guardacalcio.{GUARCAL}, cercando su skystreaming.{SKYSTR}...")
 
         # Determina l'URL di skystreaming in base al tipo di evento
         skystreaming_base_url = f"https://skystreaming.{SKYSTR}/"
@@ -302,6 +351,7 @@ def get_dynamic_logo(event_name):
         if cache_key:
             LOGO_CACHE[cache_key] = LOGO
         return LOGO
+        # --- Fine logica di scraping web (originale) ---
 
     except Exception as e:
         print(f"Error fetching logo for {team1_normalized} vs {team2_normalized}: {e}")
