@@ -17,3 +17,15 @@ https://mfp.pibuco.duckdns.org/extractor/video?host=DLHD&d=https://daddylive.dad
 #EXTINF:-1 tvg-id="Lega A - Trapani vs Reggiana" tvg-name="19:30 Lega A : Trapani vs Reggiana - 19/05/25" tvg-logo="https://raw.githubusercontent.com/cribbiox/eventi/refs/heads/main/ddsport.png" group-title="Basketball", Zona DAZN IT
 https://mfp.pibuco.duckdns.org/extractor/video?host=DLHD&d=https://daddylive.dad/embed/stream-877.php&redirect_stream=true&api_password=mfp
 
+#EXTINF:-1 tvg-id="England - Premier League - Crystal Palace vs Wolverhampton Wanderers" tvg-name="20:00 England - Premier League : Crystal Palace vs Wolverhampton Wanderers - 20/05/25" tvg-logo="https://raw.githubusercontent.com/cribbiox/eventi/refs/heads/main/ddsport.png" group-title="Soccer", Sky Sport Calcio IT
+https://mfp.pibuco.duckdns.org/extractor/video?host=DLHD&d=https://daddylive.dad/embed/stream-870.php&redirect_stream=true&api_password=mfp
+
+#EXTINF:-1 tvg-id="England - Premier League - Manchester City vs AFC Bournemouth" tvg-name="20:00 England - Premier League : Manchester City vs AFC Bournemouth - 20/05/25" tvg-logo="https://raw.githubusercontent.com/cribbiox/eventi/refs/heads/main/ddsport.png" group-title="Soccer", Sky Sport Uno IT
+https://mfp.pibuco.duckdns.org/extractor/video?host=DLHD&d=https://daddylive.dad/embed/stream-461.php&redirect_stream=true&api_password=mfp
+
+#EXTINF:-1 tvg-id="Lega A - Virtus Bologna vs. Reyer Venezia" tvg-name="19:30 Lega A : Virtus Bologna vs. Reyer Venezia - 20/05/25" tvg-logo="https://raw.githubusercontent.com/cribbiox/eventi/refs/heads/main/ddsport.png" group-title="Basketball", Rai Sport 1 IT
+https://mfp.pibuco.duckdns.org/extractor/video?host=DLHD&d=https://daddylive.dad/embed/stream-882.php&redirect_stream=true&api_password=mfp
+
+#EXTINF:-1 tvg-id="Lega A - Virtus Bologna vs. Reyer Venezia" tvg-name="19:30 Lega A : Virtus Bologna vs. Reyer Venezia - 20/05/25" tvg-logo="https://raw.githubusercontent.com/cribbiox/eventi/refs/heads/main/ddsport.png" group-title="Basketball", Eurosport 2 IT
+https://mfp.pibuco.duckdns.org/extractor/video?host=DLHD&d=https://daddylive.dad/embed/stream-879.php&redirect_stream=true&api_password=mfp
+
