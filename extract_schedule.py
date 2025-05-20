@@ -182,10 +182,10 @@ def extract_schedule_container(max_retries=3, retry_delay=5):
 
 def extract_guardacalcio_image_links(max_retries=3, retry_delay=5):
     """
-    Utilizza Playwright per scaricare i link delle immagini dalla pagina di guardacalcio.icu
+    Utilizza Playwright per scaricare i link delle immagini dalla pagina di guardacalcio.blog
     e li salva in un file.
     """
-    url = "https://guardacalcio.icu/partite-streaming.html"
+    url = "https://guardacalcio.blog/partite-streaming.html"
     
     script_dir = os.path.dirname(os.path.abspath(__file__))
     # File di output per i link delle immagini
